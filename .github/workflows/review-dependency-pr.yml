@@ -11,99 +11,27 @@ on:
         type: number
 
 jobs:
-  review:
-    name: AI Review for Dependency Updates
+  get-pr-number:
+    name: Get PR Number
     runs-on: ubuntu-latest
     if: github.actor == 'renovate[bot]' || github.event_name == 'workflow_dispatch'
-
-    permissions:
-      contents: read
-      pull-requests: write
-      models: read
-
+    outputs:
+      pr_number: ${{ steps.get-pr.outputs.pr_number }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Get PR information
-        id: pr-info
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get PR number
+        id: get-pr
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            PR_NUMBER=${{ github.event.inputs.pr_number }}
+            echo "pr_number=${{ github.event.inputs.pr_number }}" >> $GITHUB_OUTPUT
           else
-            PR_NUMBER=${{ github.event.number }}
+            echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
           fi
 
-          # Get PR details using GitHub API
-          PR_DATA=$(gh pr view $PR_NUMBER --json title,body --repo ${{ github.repository }})
-          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
-          PR_BODY=$(echo "$PR_DATA" | jq -r '.body // ""')
-
-          # Get PR diff (limit to first 3000 lines to avoid token limits)
-          PR_DIFF=$(gh pr diff $PR_NUMBER --repo ${{ github.repository }} | head -3000)
-
-          # Set outputs (escape newlines for GitHub Actions)
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "pr_title<<EOF" >> $GITHUB_OUTPUT
-          echo "$PR_TITLE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "pr_body<<EOF" >> $GITHUB_OUTPUT
-          echo "$PR_BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "pr_diff<<EOF" >> $GITHUB_OUTPUT
-          echo "$PR_DIFF" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Run AI Review
-        id: ai-review
-        uses: actions/ai-inference@v1
-        with:
-          model: 'openai/gpt-4o'
-          max-tokens: 2000
-          prompt: |
-            依存関係更新PRの専門レビュアーとして、以下の変更を分析してください。
-
-            **重要**: リポジトリ固有の具体的な分析のみを提供し、一般論は避けてください。
-
-            分析項目:
-            1. **セキュリティ影響**: 実際のCVE、既知の脆弱性修正、このリポジトリへの具体的な影響のみ記載
-            2. **互換性**: 実際のAPI変更、このプロジェクトのコードに影響する変更のみ
-            3. **パフォーマンス**: 実測可能な性能変化、このプロジェクトでの具体的な影響
-            4. **推奨事項**: 具体的なアクション（承認/要調査/テスト必要）
-
-            **除外する内容**:
-            - 一般的なセキュリティのベストプラクティス
-            - 「通常は〜」「一般的に〜」などの汎用的な説明
-            - 具体的根拠のない推測
-
-            PR情報:
-            - 番号: ${{ steps.pr-info.outputs.pr_number }}
-            - 作成者: ${{ github.actor }}
-            - タイトル: ${{ steps.pr-info.outputs.pr_title }}
-
-            PR説明:
-            ${{ steps.pr-info.outputs.pr_body }}
-
-            変更差分:
-            ${{ steps.pr-info.outputs.pr_diff }}
-
-            簡潔で具体的なレビューコメントとして出力してください。
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Post Review Comment
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
-          AI_REVIEW: ${{ steps.ai-review.outputs.response }}
-        run: |
-          deno run --allow-net --allow-env src/post-review.ts
+  review:
+    name: AI Review for Dependency Updates
+    needs: get-pr-number
+    uses: ./.github/workflows/reusable-review-dependency-pr.yml
+    with:
+      pr_number: ${{ fromJson(needs.get-pr-number.outputs.pr_number) }}
+    secrets:
+      github_token: ${{ secrets.GITHUB_TOKEN }}

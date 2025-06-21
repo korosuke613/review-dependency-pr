@@ -1,7 +1,11 @@
 # 全般
 
 - 質問への回答は日本語で行う
-- 必要に応じて @docs 内のファイルや @CLAUDE.md を修正する
+- 作業ややりとりに応じ、下記ファイルを更新する
+  - @docs/DEVELOPMENT.md
+  - @docs/REQUIREMENTS.md
+  - @docs/SPEC.md
+  - @CLAUDE.md
 
 # 開発方針
 
