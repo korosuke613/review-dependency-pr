@@ -34,4 +34,4 @@ jobs:
     with:
       pr_number: ${{ fromJson(needs.get-pr-number.outputs.pr_number) }}
     secrets:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+      token: ${{ secrets.GITHUB_TOKEN }}
