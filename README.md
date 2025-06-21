@@ -49,6 +49,10 @@ jobs:
           fi
 
   review:
+    permissions:
+      contents: read
+      pull-requests: write
+      models: read
     name: AI Review for Dependency Updates
     needs: get-pr-number
     uses: korosuke613/review-dependency-pr/.github/workflows/reusable-review-dependency-pr.yml@main
@@ -60,7 +64,7 @@ jobs:
       # diff_lines_limit: 3000
       # review_language: 'en'
     secrets:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+      token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### Parameters
@@ -78,7 +82,7 @@ jobs:
 
 #### Required Secrets
 
-- `github_token`: GitHub token for API access (usually `${{ secrets.GITHUB_TOKEN }}`)
+- `token`: GitHub token for API access (usually `${{ secrets.GITHUB_TOKEN }}`)
 
 ### Permissions
 
