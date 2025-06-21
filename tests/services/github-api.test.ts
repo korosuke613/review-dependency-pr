@@ -84,17 +84,25 @@ Deno.test('GitHubApiService', async (t) => {
     mockOctokit.rest.issues.listComments = () => Promise.resolve({ data: [] });
     mockOctokit.rest.issues.createComment = () => {
       createCommentCalled = true;
-      return Promise.resolve({});
+      return Promise.resolve({
+        data: {
+          id: 456,
+          html_url: 'https://github.com/owner/repo/pull/123#issuecomment-456',
+        },
+      });
     };
     mockOctokit.rest.issues.updateComment = () => {
       updateCommentCalled = true;
       return Promise.resolve({});
     };
 
-    await service.createOrUpdateReviewComment(123, 'Test AI review');
+    const result = await service.createOrUpdateReviewComment(123, 'Test AI review');
 
     assertEquals(createCommentCalled, true);
     assertEquals(updateCommentCalled, false);
+    assertEquals(result.action, 'created');
+    assertEquals(result.commentId, 456);
+    assertEquals(result.commentUrl, 'https://github.com/owner/repo/pull/123#issuecomment-456');
   });
 
   await t.step('should update existing AI review comment when found', async () => {
@@ -121,9 +129,12 @@ Deno.test('GitHubApiService', async (t) => {
       return Promise.resolve({});
     };
 
-    await service.createOrUpdateReviewComment(123, 'Updated AI review');
+    const result = await service.createOrUpdateReviewComment(123, 'Updated AI review');
 
     assertEquals(createCommentCalled, false);
     assertEquals(updateCommentCalled, true);
+    assertEquals(result.action, 'updated');
+    assertEquals(result.commentId, 123);
+    assertEquals(result.commentUrl, 'https://github.com/owner/repo/pull/123#issuecomment-123');
   });
 });

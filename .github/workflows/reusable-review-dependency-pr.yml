@@ -148,4 +148,4 @@ jobs:
           AI_REVIEW: ${{ steps.ai-review.outputs.response }}
         run: |
           cd review-tool
-          deno run --allow-net --allow-env src/post-review.ts
+          deno run --allow-net --allow-env --allow-write src/post-review.ts

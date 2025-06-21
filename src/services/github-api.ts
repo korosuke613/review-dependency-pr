@@ -1,13 +1,19 @@
 import { Octokit } from '@octokit/rest';
 import type { IssueComment, PullRequest, PullRequestFile } from '../types/github.ts';
 
+export interface CommentResult {
+  commentId: number;
+  commentUrl: string;
+  action: 'created' | 'updated';
+}
+
 export interface GitHubApiService {
   getPullRequest(prNumber: number): Promise<PullRequest>;
   getPullRequestFiles(prNumber: number): Promise<PullRequestFile[]>;
   createComment(prNumber: number, body: string): Promise<void>;
   getIssueComments(prNumber: number): Promise<IssueComment[]>;
   updateComment(commentId: number, body: string): Promise<void>;
-  createOrUpdateReviewComment(prNumber: number, body: string): Promise<void>;
+  createOrUpdateReviewComment(prNumber: number, body: string): Promise<CommentResult>;
   isRenovatePR(pr: PullRequest): boolean;
 }
 
@@ -109,7 +115,7 @@ export class GitHubApiServiceImpl implements GitHubApiService {
     });
   }
 
-  async createOrUpdateReviewComment(prNumber: number, body: string): Promise<void> {
+  async createOrUpdateReviewComment(prNumber: number, body: string): Promise<CommentResult> {
     const AI_REVIEW_IDENTIFIER = '<!-- AI-REVIEW-COMMENT -->';
     const commentWithIdentifier = `${AI_REVIEW_IDENTIFIER}\n${body}`;
 
@@ -120,8 +126,24 @@ export class GitHubApiServiceImpl implements GitHubApiService {
 
     if (existingAiComment) {
       await this.updateComment(existingAiComment.id, commentWithIdentifier);
+      return {
+        commentId: existingAiComment.id,
+        commentUrl:
+          `https://github.com/${this.owner}/${this.repo}/pull/${prNumber}#issuecomment-${existingAiComment.id}`,
+        action: 'updated',
+      };
     } else {
-      await this.createComment(prNumber, commentWithIdentifier);
+      const { data } = await this.octokit.rest.issues.createComment({
+        owner: this.owner,
+        repo: this.repo,
+        issue_number: prNumber,
+        body: commentWithIdentifier,
+      });
+      return {
+        commentId: data.id,
+        commentUrl: data.html_url,
+        action: 'created',
+      };
     }
   }
 
