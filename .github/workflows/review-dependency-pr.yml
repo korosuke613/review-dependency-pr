@@ -1,0 +1,77 @@
+name: Review Dependency PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: number
+
+jobs:
+  review:
+    name: AI Review for Dependency Updates
+    runs-on: ubuntu-latest
+    if: github.actor == 'renovate[bot]' || github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Get PR information
+        id: pr-info
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PR_NUMBER=${{ github.event.inputs.pr_number }}
+          else
+            PR_NUMBER=${{ github.event.number }}
+          fi
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Run AI Review
+        id: ai-review
+        uses: actions/ai-inference@v1
+        with:
+          model: 'gpt-4o'
+          prompt: |
+            You are an expert software engineer reviewing a dependency update PR.
+            Please analyze the changes and provide a comprehensive review focusing on:
+
+            1. Security implications of the dependency updates
+            2. Breaking changes and compatibility issues
+            3. Performance impact
+            4. Testing requirements
+            5. Overall recommendation (approve/request changes/needs investigation)
+
+            PR Information:
+            - PR Number: ${{ steps.pr-info.outputs.pr_number }}
+            - Author: ${{ github.actor }}
+            - Repository: ${{ github.repository }}
+
+            Please provide your review in a structured format suitable for a GitHub PR comment.
+            回答は日本語で行うこと
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post Review Comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+          AI_REVIEW: ${{ steps.ai-review.outputs.response }}
+        run: |
+          deno run --allow-net --allow-env src/post-review.ts
