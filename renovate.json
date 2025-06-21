@@ -3,9 +3,12 @@
   "extends": [
     "local>korosuke613/renovate-config"
   ],
-  "regexManagers": [
+  "customManagers": [
     {
-      "fileMatch": ["^deno\\.json$"],
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^deno\\.json$/"
+      ],
       "matchStrings": [
         "\"(?<depName>[^\"]+)\": \"jsr:(?<packageName>[^@]+)@(?<currentValue>[^\"]+)\""
       ],
@@ -13,7 +16,10 @@
       "registryUrlTemplate": "https://npm.jsr.io"
     },
     {
-      "fileMatch": ["^deno\\.json$"],
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^deno\\.json$/"
+      ],
       "matchStrings": [
         "\"(?<depName>[^\"]+)\": \"npm:(?<packageName>[^@]+)@(?<currentValue>[^\"]+)\""
       ],
