@@ -63,3 +63,14 @@ export interface DependencyUpdate {
     cve?: string;
   }>;
 }
+
+export interface IssueComment {
+  id: number;
+  body: string;
+  user: {
+    login: string;
+    type: string;
+  };
+  created_at: string;
+  updated_at: string;
+}

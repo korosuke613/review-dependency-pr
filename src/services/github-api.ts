@@ -1,10 +1,13 @@
 import { Octokit } from '@octokit/rest';
-import type { PullRequest, PullRequestFile } from '../types/github.ts';
+import type { IssueComment, PullRequest, PullRequestFile } from '../types/github.ts';
 
 export interface GitHubApiService {
   getPullRequest(prNumber: number): Promise<PullRequest>;
   getPullRequestFiles(prNumber: number): Promise<PullRequestFile[]>;
   createComment(prNumber: number, body: string): Promise<void>;
+  getIssueComments(prNumber: number): Promise<IssueComment[]>;
+  updateComment(commentId: number, body: string): Promise<void>;
+  createOrUpdateReviewComment(prNumber: number, body: string): Promise<void>;
   isRenovatePR(pr: PullRequest): boolean;
 }
 
@@ -58,14 +61,14 @@ export class GitHubApiServiceImpl implements GitHubApiService {
       pull_number: prNumber,
     });
 
-    return data.map((file: any) => ({
+    return data.map((file) => ({
       filename: file.filename,
       status: file.status as PullRequestFile['status'],
       additions: file.additions,
       deletions: file.deletions,
       changes: file.changes,
-      patch: file.patch,
-      previous_filename: file.previous_filename,
+      ...(file.patch && { patch: file.patch }),
+      ...(file.previous_filename && { previous_filename: file.previous_filename }),
     }));
   }
 
@@ -76,6 +79,50 @@ export class GitHubApiServiceImpl implements GitHubApiService {
       issue_number: prNumber,
       body,
     });
+  }
+
+  async getIssueComments(prNumber: number): Promise<IssueComment[]> {
+    const { data } = await this.octokit.rest.issues.listComments({
+      owner: this.owner,
+      repo: this.repo,
+      issue_number: prNumber,
+    });
+
+    return data.map((comment) => ({
+      id: comment.id,
+      body: comment.body || '',
+      user: {
+        login: comment.user?.login || '',
+        type: comment.user?.type || '',
+      },
+      created_at: comment.created_at,
+      updated_at: comment.updated_at,
+    }));
+  }
+
+  async updateComment(commentId: number, body: string): Promise<void> {
+    await this.octokit.rest.issues.updateComment({
+      owner: this.owner,
+      repo: this.repo,
+      comment_id: commentId,
+      body,
+    });
+  }
+
+  async createOrUpdateReviewComment(prNumber: number, body: string): Promise<void> {
+    const AI_REVIEW_IDENTIFIER = '<!-- AI-REVIEW-COMMENT -->';
+    const commentWithIdentifier = `${AI_REVIEW_IDENTIFIER}\n${body}`;
+
+    const comments = await this.getIssueComments(prNumber);
+    const existingAiComment = comments.find((comment) =>
+      comment.body.includes(AI_REVIEW_IDENTIFIER)
+    );
+
+    if (existingAiComment) {
+      await this.updateComment(existingAiComment.id, commentWithIdentifier);
+    } else {
+      await this.createComment(prNumber, commentWithIdentifier);
+    }
   }
 
   isRenovatePR(pr: PullRequest): boolean {
