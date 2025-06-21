@@ -19,6 +19,21 @@ async function main() {
     }
 
     const githubApi = new GitHubApiServiceImpl(env.GITHUB_TOKEN, owner, repo);
+
+    // Use AI_REVIEW from environment if available
+    if (env.AI_REVIEW) {
+      console.log('Using AI review from GitHub Actions');
+
+      // Post the AI review directly from environment variable
+      await githubApi.createComment(prNumber, env.AI_REVIEW);
+
+      console.log('✅ AI review comment posted successfully');
+      return;
+    }
+
+    // Fallback to original logic if AI_REVIEW is not available
+    console.log('AI_REVIEW not found in environment, running local AI review');
+
     const prAnalyzer = new PrAnalyzerServiceImpl();
     const aiReview = new AiReviewServiceImpl();
 

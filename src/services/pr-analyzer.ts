@@ -114,9 +114,20 @@ export class PrAnalyzerServiceImpl implements PrAnalyzerService {
 
     for (const line of lines) {
       if (line.includes(version)) {
-        const packageRegex = /"([^"]+)":\s*"[^"]*"/;
-        const match = line.match(packageRegex);
-        if (match?.[1]) return match[1];
+        // JSON format (package.json, package-lock.json)
+        const jsonRegex = /"([^"]+)":\s*"[^"]*"/;
+        const jsonMatch = line.match(jsonRegex);
+        if (jsonMatch?.[1]) return jsonMatch[1];
+
+        // TOML format (Cargo.toml)
+        const tomlRegex = /^[+-]?\s*([a-zA-Z0-9_-]+)\s*=\s*"[^"]*"/;
+        const tomlMatch = line.match(tomlRegex);
+        if (tomlMatch?.[1]) return tomlMatch[1];
+
+        // YAML format (other dependency files)
+        const yamlRegex = /^[+-]?\s*([a-zA-Z0-9_-]+):\s*/;
+        const yamlMatch = line.match(yamlRegex);
+        if (yamlMatch?.[1]) return yamlMatch[1];
       }
     }
 
@@ -124,9 +135,20 @@ export class PrAnalyzerServiceImpl implements PrAnalyzerService {
   }
 
   private parseVersion(version: string): { major: number; minor: number; patch: number } {
-    const cleaned = version.replace(/^[^\d]*/, '').split(/[^\d]/)[0] || '0.0.0';
-    const parts = cleaned.split('.').map(Number);
+    // Remove prefixes (^, ~, >=, etc.) and extract version numbers
+    const cleaned = version.replace(/^[^\d]*/, '');
+    const versionMatch = cleaned.match(/(\d+)\.(\d+)\.(\d+)/);
 
+    if (versionMatch) {
+      return {
+        major: parseInt(versionMatch[1]!, 10),
+        minor: parseInt(versionMatch[2]!, 10),
+        patch: parseInt(versionMatch[3]!, 10),
+      };
+    }
+
+    // Fallback for incomplete versions
+    const parts = cleaned.split('.').map(Number);
     return {
       major: parts[0] || 0,
       minor: parts[1] || 0,
