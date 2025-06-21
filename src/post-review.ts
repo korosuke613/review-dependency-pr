@@ -1,9 +1,56 @@
-#!/usr/bin/env -S deno run --allow-net --allow-env
+#!/usr/bin/env -S deno run --allow-net --allow-env --allow-write
 
-import { GitHubApiServiceImpl } from './services/github-api.ts';
+import { type CommentResult, GitHubApiServiceImpl } from './services/github-api.ts';
 import { PrAnalyzerServiceImpl } from './services/pr-analyzer.ts';
 import { AiReviewServiceImpl } from './services/ai-review.ts';
 import type { Environment } from './types/config.ts';
+import type { PullRequest } from './types/github.ts';
+
+function writeStepSummary(
+  pr: PullRequest,
+  commentResult: CommentResult,
+  repository: string,
+  reviewContent: string,
+): void {
+  const stepSummaryFile = Deno.env.get('GITHUB_STEP_SUMMARY');
+  if (!stepSummaryFile) {
+    console.log('GITHUB_STEP_SUMMARY environment variable not found, skipping summary');
+    return;
+  }
+
+  const prUrl = `https://github.com/${repository}/pull/${pr.number}`;
+  const actionText = commentResult.action === 'created' ? '作成' : '更新';
+
+  // コメント内容を要約（最初の200文字）
+  const reviewSummary = reviewContent.length > 200
+    ? reviewContent.substring(0, 200) + '...'
+    : reviewContent;
+
+  const summary = `# AI Review Summary
+
+## 対象PR
+- **PR番号**: #${pr.number}
+- **PR URL**: ${prUrl}
+- **タイトル**: ${pr.title}
+- **作成者**: ${pr.user.login}
+
+## レビューコメント
+- **操作**: ${actionText}
+- **コメントURL**: ${commentResult.commentUrl}
+- **レビュー要約**: 
+  ${reviewSummary}
+
+---
+*このサマリーは AI レビューシステムによって自動生成されました*
+`;
+
+  try {
+    Deno.writeTextFileSync(stepSummaryFile, summary);
+    console.log(`✅ Step summary written to ${stepSummaryFile}`);
+  } catch (error) {
+    console.error('❌ Failed to write step summary:', error);
+  }
+}
 
 async function main() {
   try {
@@ -24,8 +71,14 @@ async function main() {
     if (env.AI_REVIEW) {
       console.log('Using AI review from GitHub Actions');
 
+      // Get PR information for step summary
+      const pr = await githubApi.getPullRequest(prNumber);
+
       // Post the AI review directly from environment variable
-      await githubApi.createOrUpdateReviewComment(prNumber, env.AI_REVIEW);
+      const commentResult = await githubApi.createOrUpdateReviewComment(prNumber, env.AI_REVIEW);
+
+      // Write step summary
+      writeStepSummary(pr, commentResult, env.GITHUB_REPOSITORY, env.AI_REVIEW);
 
       console.log('✅ AI review comment posted successfully');
       return;
@@ -68,7 +121,10 @@ async function main() {
     const commentBody = aiReview.formatReviewComment(reviewResult);
 
     // Post comment to PR
-    await githubApi.createOrUpdateReviewComment(prNumber, commentBody);
+    const commentResult = await githubApi.createOrUpdateReviewComment(prNumber, commentBody);
+
+    // Write step summary
+    writeStepSummary(pr, commentResult, env.GITHUB_REPOSITORY, commentBody);
 
     console.log('✅ AI review comment posted successfully');
     console.log(`Recommendation: ${reviewResult.recommendation}`);
