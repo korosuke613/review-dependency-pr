@@ -6,27 +6,50 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["^deno\\.json$"],
+      "description": "JSR dependencies in deno.json imports",
+      "fileMatch": ["^deno\\.jsonc?$"],
       "matchStrings": [
-        "\"(?<depName>[^\"]+)\": \"jsr:(?<packageName>@[^@]+/[^@]+)@(?<currentValue>[^\"]+)\""
+        "\"(?<depName>[^\"]+)\":\\s*\"jsr:(?<packageName>[^@]+)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm",
-      "registryUrlTemplate": "https://npm.jsr.io"
+      "registryUrlTemplate": "https://npm.jsr.io",
+      "depTypeTemplate": "jsr"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["^deno\\.json$"],
+      "description": "NPM dependencies in deno.json imports",
+      "fileMatch": ["^deno\\.jsonc?$"],
       "matchStrings": [
-        "\"(?<depName>[^\"]+)\": \"npm:(?<packageName>@[^@]+/[^@]+|[^@]+)@(?<currentValue>[^\"]+)\""
+        "\"(?<depName>[^\"]+)\":\\s*\"npm:(?<packageName>[^@/]+(?:\/[^@]+)?)@(?<currentValue>[^\"]+)\""
       ],
-      "datasourceTemplate": "npm"
+      "datasourceTemplate": "npm",
+      "depTypeTemplate": "npm"
     }
   ],
   "packageRules": [
     {
-      "matchFileNames": ["deno.json"],
-      "matchPackageNames": ["@std/**"],
-      "groupName": "deno std packages"
+      "description": "JSR packages grouping",
+      "matchDepTypes": ["jsr"],
+      "groupName": "JSR dependencies",
+      "separateMinorPatch": false
+    },
+    {
+      "description": "NPM packages in Deno project",
+      "matchDepTypes": ["npm"],
+      "matchFileNames": ["deno.json", "deno.jsonc"],
+      "groupName": "NPM dependencies"
+    },
+    {
+      "description": "Deno standard library auto-merge patch updates",
+      "matchPackagePatterns": ["^@std/"],
+      "matchDepTypes": ["jsr"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Weekly schedule for dependency updates",
+      "matchFileNames": ["deno.json", "deno.jsonc"],
+      "schedule": ["before 4am on monday"]
     }
-  ]
+  ],
 }
