@@ -6,24 +6,27 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^deno\\.json$/"
-      ],
+      "managerFilePatterns": ["^deno\\.json$"],
       "matchStrings": [
-        "\"(?<depName>[^\"]+)\": \"jsr:(?<packageName>[^@]+)@(?<currentValue>[^\"]+)\""
+        "\"(?<depName>[^\"]+)\": \"jsr:(?<packageName>@[^/]+/[^@]+)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm",
       "registryUrlTemplate": "https://npm.jsr.io"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^deno\\.json$/"
-      ],
+      "managerFilePatterns": ["^deno\\.json$"],
       "matchStrings": [
-        "\"(?<depName>[^\"]+)\": \"npm:(?<packageName>[^@]+)@(?<currentValue>[^\"]+)\""
+        "\"(?<depName>[^\"]+)\": \"npm:(?<packageName>@[^/]+/[^@]+|[^@]+)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchFileNames": ["deno.json"],
+      "matchPackageNames": ["@std/**"],
+      "groupName": "deno std packages"
     }
   ]
 }
