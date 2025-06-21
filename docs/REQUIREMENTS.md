@@ -1,7 +1,7 @@
 # 依存関係更新 PR に対し、AI を使ってレビューを行う
 
-- [x] 依存関係更新 PR の作成者は Renovate とする
-- [x] Renovate が作った PR に対し、AI によるレビューを GitHub Actions で実行する
+- [x] 依存関係更新 PR の作成者は Renovate、Dependabot とする
+- [x] Renovate、Dependabot が作った PR に対し、AI によるレビューを GitHub Actions で実行する
   - `on.pull_request` イベントでトリガー
   - `workflow_dispatch` イベントで手動トリガー可能
 - [x] AI レビューの結果は、PR のコメントとして残す
