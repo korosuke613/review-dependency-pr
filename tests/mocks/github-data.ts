@@ -25,8 +25,33 @@ export const mockRenovatePR: PullRequest = {
   deletions: 1,
 };
 
-export const mockNonRenovatePR: PullRequest = {
+export const mockDependabotPR: PullRequest = {
   number: 124,
+  title: 'chore(deps): bump cross-spawn from 7.0.3 to 7.0.6',
+  body:
+    'Bumps [cross-spawn](https://github.com/moxystudio/node-cross-spawn) from 7.0.3 to 7.0.6.\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a href="https://github.com/moxystudio/node-cross-spawn/blob/master/CHANGELOG.md">cross-spawn\'s changelog</a>.</em></p>\n<blockquote>\n<h2><a href="https://github.com/moxystudio/node-cross-spawn/compare/v7.0.5...v7.0.6">7.0.6</a> (2023-12-11)</h2>\n<h3>Bug Fixes</h3>\n<ul>\n<li>disable regexp backtracking (<a href="https://github.com/moxystudio/node-cross-spawn/commit/a9a8d3ca24b984c5f896ac1f48c95c1de4dcd8d9">a9a8d3c</a>)</li>\n</ul>\n</blockquote>\n</details>',
+  user: {
+    login: 'dependabot[bot]',
+    type: 'Bot',
+  },
+  base: {
+    ref: 'main',
+    sha: 'abc123',
+  },
+  head: {
+    ref: 'dependabot/npm_and_yarn/cross-spawn-7.0.6',
+    sha: 'def456',
+  },
+  state: 'open',
+  draft: false,
+  mergeable: true,
+  changed_files: 1,
+  additions: 1,
+  deletions: 1,
+};
+
+export const mockNonRenovatePR: PullRequest = {
+  number: 125,
   title: 'Add new feature',
   body: 'This PR adds a new feature',
   user: {
@@ -76,6 +101,22 @@ export const mockCargoTomlFile: PullRequestFile = {
 -serde = "1.0.190"
 +serde = "1.0.193"
  tokio = { version = "1.0", features = ["full"] }`,
+};
+
+export const mockDependabotPackageJsonFile: PullRequestFile = {
+  filename: 'package.json',
+  status: 'modified',
+  additions: 1,
+  deletions: 1,
+  changes: 2,
+  patch: `@@ -15,7 +15,7 @@
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "typescript": "^5.0.0"
+  }
+-    "cross-spawn": "^7.0.3",
++    "cross-spawn": "^7.0.6",
+  }`,
 };
 
 export const mockNonDependencyFile: PullRequestFile = {

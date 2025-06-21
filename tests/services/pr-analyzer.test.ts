@@ -2,6 +2,8 @@ import { assertEquals } from 'jsr:@std/assert';
 import { PrAnalyzerServiceImpl } from '../../src/services/pr-analyzer.ts';
 import {
   mockCargoTomlFile,
+  mockDependabotPackageJsonFile,
+  mockDependabotPR,
   mockNonDependencyFile,
   mockPackageJsonFile,
   mockRenovatePR,
@@ -75,5 +77,37 @@ Deno.test('PrAnalyzerService', async (t) => {
     assertEquals(service.determineChangeType('^1.0.0', '^2.0.0'), 'major');
     assertEquals(service.determineChangeType('~1.0.0', '~1.1.0'), 'minor');
     assertEquals(service.determineChangeType('>=1.0.0', '>=1.0.1'), 'patch');
+  });
+
+  await t.step('should analyze dependency updates from Dependabot PR', () => {
+    const updates = service.analyzeDependencyUpdates(mockDependabotPR, [
+      mockDependabotPackageJsonFile,
+    ]);
+
+    assertEquals(updates.length, 1);
+    assertEquals(updates[0]?.packageName, 'cross-spawn');
+    assertEquals(updates[0]?.currentVersion, '7.0.3');
+    assertEquals(updates[0]?.newVersion, '7.0.6');
+    assertEquals(updates[0]?.ecosystem, 'npm');
+    assertEquals(updates[0]?.changeType, 'patch');
+  });
+
+  await t.step('should handle both Renovate and Dependabot PRs', () => {
+    const renovateUpdates = service.analyzeDependencyUpdates(mockRenovatePR, [mockPackageJsonFile]);
+    const dependabotUpdates = service.analyzeDependencyUpdates(mockDependabotPR, [
+      mockDependabotPackageJsonFile,
+    ]);
+
+    // Both should be analyzed successfully
+    assertEquals(renovateUpdates.length, 1);
+    assertEquals(dependabotUpdates.length, 1);
+
+    // Renovate PR
+    assertEquals(renovateUpdates[0]?.packageName, '@types/node');
+    assertEquals(renovateUpdates[0]?.changeType, 'minor');
+
+    // Dependabot PR
+    assertEquals(dependabotUpdates[0]?.packageName, 'cross-spawn');
+    assertEquals(dependabotUpdates[0]?.changeType, 'patch');
   });
 });
