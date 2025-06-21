@@ -7,7 +7,9 @@
     {
       "customType": "regex",
       "description": "JSR dependencies in deno.json imports",
-      "fileMatch": ["^deno\\.jsonc?$"],
+      "managerFilePatterns": [
+        "/^deno\\.jsonc?$/"
+      ],
       "matchStrings": [
         "\"(?<depName>[^\"]+)\":\\s*\"jsr:(?<packageName>[^@]+)@(?<currentValue>[^\"]+)\""
       ],
@@ -18,9 +20,11 @@
     {
       "customType": "regex",
       "description": "NPM dependencies in deno.json imports",
-      "fileMatch": ["^deno\\.jsonc?$"],
+      "managerFilePatterns": [
+        "/^deno\\.jsonc?$/"
+      ],
       "matchStrings": [
-        "\"(?<depName>[^\"]+)\":\\s*\"npm:(?<packageName>[^@/]+(?:\/[^@]+)?)@(?<currentValue>[^\"]+)\""
+        "\"(?<depName>[^\"]+)\":\\s*\"npm:(?<packageName>[^@/]+(?:/[^@]+)?)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm",
       "depTypeTemplate": "npm"
@@ -29,27 +33,45 @@
   "packageRules": [
     {
       "description": "JSR packages grouping",
-      "matchDepTypes": ["jsr"],
+      "matchDepTypes": [
+        "jsr"
+      ],
       "groupName": "JSR dependencies",
       "separateMinorPatch": false
     },
     {
       "description": "NPM packages in Deno project",
-      "matchDepTypes": ["npm"],
-      "matchFileNames": ["deno.json", "deno.jsonc"],
+      "matchDepTypes": [
+        "npm"
+      ],
+      "matchFileNames": [
+        "deno.json",
+        "deno.jsonc"
+      ],
       "groupName": "NPM dependencies"
     },
     {
       "description": "Deno standard library auto-merge patch updates",
-      "matchPackagePatterns": ["^@std/"],
-      "matchDepTypes": ["jsr"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true
+      "matchDepTypes": [
+        "jsr"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "automerge": true,
+      "matchPackageNames": [
+        "/^@std//"
+      ]
     },
     {
       "description": "Weekly schedule for dependency updates",
-      "matchFileNames": ["deno.json", "deno.jsonc"],
-      "schedule": ["before 4am on monday"]
+      "matchFileNames": [
+        "deno.json",
+        "deno.jsonc"
+      ],
+      "schedule": [
+        "before 4am on monday"
+      ]
     }
-  ],
+  ]
 }
