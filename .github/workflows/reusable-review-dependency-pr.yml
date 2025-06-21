@@ -28,7 +28,7 @@ on:
         type: string
         default: 'en'
     secrets:
-      github_token:
+      token:
         description: 'GitHub token for API access'
         required: true
 
@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.token }}
           fetch-depth: 0
 
       - name: Checkout review tool repository
@@ -65,7 +65,7 @@ jobs:
       - name: Get PR information
         id: pr-info
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           PR_NUMBER=${{ inputs.pr_number }}
 
@@ -139,11 +139,11 @@ jobs:
             Changes:
             ${{ steps.pr-info.outputs.pr_diff }}
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
 
       - name: Post Review Comment
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
           PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
           AI_REVIEW: ${{ steps.ai-review.outputs.response }}
         run: |
