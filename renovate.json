@@ -8,7 +8,7 @@
       "customType": "regex",
       "managerFilePatterns": ["^deno\\.json$"],
       "matchStrings": [
-        "\"(?<depName>[^\"]+)\": \"jsr:(?<packageName>@[^/]+/[^@]+)@(?<currentValue>[^\"]+)\""
+        "\"(?<depName>[^\"]+)\": \"jsr:(?<packageName>@[^@]+/[^@]+)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm",
       "registryUrlTemplate": "https://npm.jsr.io"
@@ -17,7 +17,7 @@
       "customType": "regex",
       "managerFilePatterns": ["^deno\\.json$"],
       "matchStrings": [
-        "\"(?<depName>[^\"]+)\": \"npm:(?<packageName>@[^/]+/[^@]+|[^@]+)@(?<currentValue>[^\"]+)\""
+        "\"(?<depName>[^\"]+)\": \"npm:(?<packageName>@[^@]+/[^@]+|[^@]+)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm"
     }
