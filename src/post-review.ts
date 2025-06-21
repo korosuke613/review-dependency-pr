@@ -25,7 +25,7 @@ async function main() {
       console.log('Using AI review from GitHub Actions');
 
       // Post the AI review directly from environment variable
-      await githubApi.createComment(prNumber, env.AI_REVIEW);
+      await githubApi.createOrUpdateReviewComment(prNumber, env.AI_REVIEW);
 
       console.log('✅ AI review comment posted successfully');
       return;
@@ -68,7 +68,7 @@ async function main() {
     const commentBody = aiReview.formatReviewComment(reviewResult);
 
     // Post comment to PR
-    await githubApi.createComment(prNumber, commentBody);
+    await githubApi.createOrUpdateReviewComment(prNumber, commentBody);
 
     console.log('✅ AI review comment posted successfully');
     console.log(`Recommendation: ${reviewResult.recommendation}`);
