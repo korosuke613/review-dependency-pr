@@ -48,7 +48,9 @@ export class GitHubModelsAiService implements AiReviewService {
         throw new Error(`API request failed with status ${response.status}`);
       }
 
-      const aiResponse = (response.body as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]?.message?.content || '';
+      const aiResponse =
+        (response.body as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]
+          ?.message?.content || '';
       return this.parseAiResponse(aiResponse, updates);
     } catch (error) {
       console.error('Error calling GitHub Models API:', error);

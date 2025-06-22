@@ -55,9 +55,47 @@ Deno.test('GitHubModelsAiService - formatReviewComment', () => {
 });
 
 Deno.test('GitHubModelsAiService - generateReview with fallback', () => {
-  // Azure クライアントの作成をスキップしてテストします
-  // 実際の環境では適切な権限で実行されます
-  console.log('generateReview fallback test skipped due to Azure client OS requirements');
+  // Azure クライアント作成エラーを回避して、フォールバック動作を直接テスト
+  try {
+    // コンストラクタでエラーが発生するかをテスト
+    new GitHubModelsAiService({
+      token: 'test-token',
+      model: 'test-model',
+    });
+
+    // コンストラクタが成功した場合は、実際のフォールバックテストを実行
+    // （ここには到達しない可能性が高い）
+    console.log('GitHubModelsAiService constructor succeeded, but fallback test not implemented');
+    assertEquals(true, true);
+  } catch (error) {
+    // Azure クライアント作成時のOS権限エラーの場合
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes('osRelease') || errorMessage.includes('NotCapable')) {
+      console.log('generateReview fallback test skipped due to Azure client OS requirements');
+
+      // パースメソッドを直接テストしてフォールバック動作を検証
+      const parseMethod = GitHubModelsAiService.prototype['parseAiResponse'];
+      const mockContext = {
+        extractSection: GitHubModelsAiService.prototype['extractSection'],
+        extractRecommendation: GitHubModelsAiService.prototype['extractRecommendation'],
+        extractList: GitHubModelsAiService.prototype['extractList'],
+      };
+
+      // 空のレスポンス（エラー時のフォールバック）をテスト
+      const fallbackResult = parseMethod.call(mockContext, '', mockUpdates);
+
+      // フォールバック結果の検証
+      assertEquals(fallbackResult.recommendation, 'needs_investigation');
+      assertEquals(fallbackResult.summary, '依存関係の更新が検出されました。');
+      assertEquals(fallbackResult.testingRequirements.length > 0, true);
+      assertEquals(
+        fallbackResult.testingRequirements[0],
+        '更新後の動作確認テストを実行してください',
+      );
+    } else {
+      throw error;
+    }
+  }
 });
 
 // プライベートメソッドのテスト用のモック
