@@ -2,8 +2,6 @@ import { assertEquals } from '@std/assert';
 import { GitHubModelsAiService } from '../../src/services/github-models-ai.ts';
 import type { DependencyUpdate } from '../../src/types/github.ts';
 
-// Mock data (removed mockPR as it's not used)
-
 const mockUpdates: DependencyUpdate[] = [
   {
     packageName: 'react',
