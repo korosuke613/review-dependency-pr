@@ -1,0 +1,81 @@
+name: Reusable AI Review for Dependency Updates (Direct API)
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: number
+      ai_model:
+        description: 'AI model to use for review (GitHub Models)'
+        required: false
+        type: string
+        default: 'gpt-4o'
+      ai_endpoint:
+        description: 'AI endpoint URL'
+        required: false
+        type: string
+        default: 'https://models.inference.ai.azure.com'
+      max_tokens:
+        description: 'Maximum tokens for AI response'
+        required: false
+        type: number
+        default: 2000
+      diff_lines_limit:
+        description: 'Maximum lines of diff to include in review'
+        required: false
+        type: number
+        default: 3000
+      review_language:
+        description: 'Language for review output (en/ja)'
+        required: false
+        type: string
+        default: 'en'
+    secrets:
+      github_token:
+        description: 'GitHub Personal Access Token for GitHub Models API'
+        required: true
+
+jobs:
+  review:
+    name: AI Review for Dependency Updates (Direct API)
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout calling repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.github_token }}
+          fetch-depth: 0
+
+      - name: Checkout review tool repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: korosuke613/review-dependency-pr
+          path: review-tool
+          fetch-depth: 1
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
+        with:
+          deno-version: v2.x
+
+      - name: Run AI Review (Direct API)
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          AI_PROVIDER: 'github-models'
+          AI_MODEL: ${{ inputs.ai_model }}
+          AI_ENDPOINT: ${{ inputs.ai_endpoint }}
+          REVIEW_LANGUAGE: ${{ inputs.review_language }}
+          MAX_TOKENS: ${{ inputs.max_tokens }}
+          DIFF_LINES_LIMIT: ${{ inputs.diff_lines_limit }}
+        run: |
+          cd review-tool
+          deno run --allow-net --allow-env --allow-sys src/main.ts
