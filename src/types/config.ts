@@ -6,7 +6,8 @@ export interface Config {
   };
   ai: {
     model: string;
-    provider: string;
+    provider: 'github-actions' | 'github-models';
+    endpoint?: string;
   };
 }
 
@@ -15,4 +16,7 @@ export interface Environment {
   GITHUB_REPOSITORY: string;
   PR_NUMBER: string;
   AI_REVIEW: string | undefined;
+  AI_PROVIDER?: 'github-actions' | 'github-models';
+  AI_MODEL?: string;
+  AI_ENDPOINT?: string;
 }

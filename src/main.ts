@@ -2,7 +2,7 @@
 
 import { GitHubApiServiceImpl } from './services/github-api.ts';
 import { PrAnalyzerServiceImpl } from './services/pr-analyzer.ts';
-import { AiReviewServiceImpl } from './services/ai-review.ts';
+import { createAiReviewService } from './services/ai-service-factory.ts';
 
 async function main() {
   console.log('🤖 Dependency PR Review System');
@@ -75,7 +75,18 @@ async function reviewPR(prNumber: number) {
 
     const githubApi = new GitHubApiServiceImpl(token, owner, repo);
     const prAnalyzer = new PrAnalyzerServiceImpl();
-    const aiReview = new AiReviewServiceImpl();
+
+    // AI プロバイダーの選択
+    const aiProvider = Deno.env.get('AI_PROVIDER') as 'github-actions' | 'github-models' ||
+      'github-actions';
+    const aiModel = Deno.env.get('AI_MODEL');
+    const aiEndpoint = Deno.env.get('AI_ENDPOINT');
+
+    const aiReview = createAiReviewService(aiProvider, {
+      token,
+      ...(aiModel && { model: aiModel }),
+      ...(aiEndpoint && { endpoint: aiEndpoint }),
+    });
 
     // Get PR information
     const pr = await githubApi.getPullRequest(prNumber);

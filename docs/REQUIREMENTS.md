@@ -16,3 +16,10 @@
 
 - [x] GitHub Models を使用する
 - [x] GitHub Models を GitHub Actions から呼び出す際は `actions/ai-inference@v1` を使用する
+- [x] GitHub Models API を直接呼び出す機能を提供する
+  - GitHub Personal Access Token による認証
+  - ローカル実行やCI/CD環境以外での利用を可能にする
+  - 既存の GitHub Actions ベースの実装との併用
+- [x] AI プロバイダーの動的選択機能
+  - 環境変数 `AI_PROVIDER` で `github-actions` または `github-models` を選択
+  - デフォルトは `github-actions` を維持
