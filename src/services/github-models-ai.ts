@@ -213,7 +213,7 @@ export class GitHubModelsAiService implements AiReviewService {
   }
 
   private extractSection(response: string, section: string): string | null {
-    const regex = new RegExp(`${section}[:\s]*([^\n]+)`, 'i');
+    const regex = new RegExp(`${section}[:\\s]*([^\\n]+)`, 'i');
     const match = response.match(regex);
     return match?.[1]?.trim() || null;
   }
