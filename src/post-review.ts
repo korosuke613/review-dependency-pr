@@ -2,7 +2,7 @@
 
 import { type CommentResult, GitHubApiServiceImpl } from './services/github-api.ts';
 import { PrAnalyzerServiceImpl } from './services/pr-analyzer.ts';
-import { AiReviewServiceImpl } from './services/ai-review.ts';
+import { createAiReviewService } from './services/ai-service-factory.ts';
 import type { Environment } from './types/config.ts';
 import type { PullRequest } from './types/github.ts';
 
@@ -88,7 +88,14 @@ async function main() {
     console.log('AI_REVIEW not found in environment, running local AI review');
 
     const prAnalyzer = new PrAnalyzerServiceImpl();
-    const aiReview = new AiReviewServiceImpl();
+
+    // AI プロバイダーの選択
+    const aiProvider = env.AI_PROVIDER || 'github-actions';
+    const aiReview = createAiReviewService(aiProvider, {
+      token: env.GITHUB_TOKEN,
+      ...(env.AI_MODEL && { model: env.AI_MODEL }),
+      ...(env.AI_ENDPOINT && { endpoint: env.AI_ENDPOINT }),
+    });
 
     // Get PR information
     const pr = await githubApi.getPullRequest(prNumber);

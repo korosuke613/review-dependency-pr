@@ -2,11 +2,21 @@
 
 import { GitHubApiServiceImpl } from './services/github-api.ts';
 import { PrAnalyzerServiceImpl } from './services/pr-analyzer.ts';
-import { AiReviewServiceImpl } from './services/ai-review.ts';
+import { createAiReviewService } from './services/ai-service-factory.ts';
 
 async function main() {
   console.log('🤖 Dependency PR Review System');
   console.log('================================');
+
+  // GitHub ActionsからPR_NUMBER環境変数が設定されている場合はそれを使用
+  const prNumberEnv = Deno.env.get('PR_NUMBER');
+  if (prNumberEnv) {
+    const prNumber = parseInt(prNumberEnv, 10);
+    if (!isNaN(prNumber)) {
+      await reviewPR(prNumber);
+      return;
+    }
+  }
 
   const args = Deno.args;
 
@@ -17,6 +27,9 @@ async function main() {
     console.log('Commands:');
     console.log('  review <pr-number>  - Review a specific PR');
     console.log('  help                - Show this help message');
+    console.log('');
+    console.log('Environment Variables:');
+    console.log('  PR_NUMBER           - PR number to review (for GitHub Actions)');
     return;
   }
 
@@ -75,7 +88,18 @@ async function reviewPR(prNumber: number) {
 
     const githubApi = new GitHubApiServiceImpl(token, owner, repo);
     const prAnalyzer = new PrAnalyzerServiceImpl();
-    const aiReview = new AiReviewServiceImpl();
+
+    // AI プロバイダーの選択
+    const aiProvider = Deno.env.get('AI_PROVIDER') as 'github-actions' | 'github-models' ||
+      'github-actions';
+    const aiModel = Deno.env.get('AI_MODEL');
+    const aiEndpoint = Deno.env.get('AI_ENDPOINT');
+
+    const aiReview = createAiReviewService(aiProvider, {
+      token,
+      ...(aiModel && { model: aiModel }),
+      ...(aiEndpoint && { endpoint: aiEndpoint }),
+    });
 
     // Get PR information
     const pr = await githubApi.getPullRequest(prNumber);
@@ -121,7 +145,12 @@ async function reviewPR(prNumber: number) {
       console.log(`   Breaking Changes: ${reviewResult.breakingChanges.length}`);
     }
 
-    console.log('✅ Analysis complete');
+    // Format and post review comment
+    console.log('📤 Posting review comment...');
+    const comment = aiReview.formatReviewComment(reviewResult);
+    await githubApi.createOrUpdateReviewComment(prNumber, comment);
+
+    console.log('✅ Review posted successfully');
   } catch (error) {
     console.error('❌ Error analyzing PR:', error);
     Deno.exit(1);

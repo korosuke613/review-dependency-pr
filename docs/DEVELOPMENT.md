@@ -3,7 +3,7 @@
 - 各機能はモジュール化し、再利用性を高める
 - 各機能はテスト可能な形で実装する
 - 今後やるべきことを見つけたら、日本語で Issue を立てる
-- コミットする前に deno check、deno test、deno fmt で lint とテスト、フォーマットを実行する
+- コミットする前に deno check、deno lint, deno test、deno fmt で lint とテスト、フォーマットを実行する
 
 # テスト
 
