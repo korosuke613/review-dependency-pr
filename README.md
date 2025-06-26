@@ -189,6 +189,9 @@ export PR_NUMBER=123
 deno run --allow-net --allow-env --allow-sys src/main.ts
 ```
 
+**Note on Azure SDK:** The direct API mode uses the `@azure-rest/ai-inference` package, which may have its own system-level dependencies. If you encounter issues, please refer to the Azure SDK for JavaScript documentation.
+
+
 ## Development
 
 ### Prerequisites
