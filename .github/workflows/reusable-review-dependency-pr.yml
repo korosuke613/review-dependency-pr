@@ -91,7 +91,7 @@ jobs:
 
       - name: Run AI Review
         id: ai-review
-        uses: actions/ai-inference@d645f067d89ee1d5d736a5990e327e504d1c5a4a # v1.1.0
+        uses: actions/ai-inference@334892bb203895caaed82ec52d23c1ed9385151e # v2.0.4
         with:
           model: ${{ inputs.ai_model }}
           max-tokens: ${{ inputs.max_tokens }}
